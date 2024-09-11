@@ -1,202 +1,151 @@
-import {
-  useState,
-  Dispatch,
-  SetStateAction,
-  ChangeEvent,
-  FormEvent,
-} from "react";
+import { useState, ChangeEvent, FormEvent, FC } from "react";
 import styles from "./SignUP.module.scss";
 
-interface SignUpFormState {
-  firstname: string;
-  lastname: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  username: string;
-}
+// Types for form state and errors
+type FormField = string;
+type FormState = Record<string, FormField>;
 
+// Input field configuration
+const inputFields = [
+  {
+    label: "First Name",
+    tag: "firstname",
+    type: "text",
+    placeholder: "First name...",
+  },
+  {
+    label: "Last Name",
+    tag: "lastname",
+    type: "text",
+    placeholder: "Last name...",
+  },
+  {
+    label: "Unique username",
+    tag: "username",
+    type: "text",
+    placeholder: "Unique username...",
+  },
+  {
+    label: "Unique email",
+    tag: "email",
+    type: "email",
+    placeholder: "Unique Email...",
+  },
+  {
+    label: "Password",
+    tag: "password",
+    type: "password",
+    placeholder: "8+ chars: upper, lower, number, (@$!%*?&)",
+  },
+  {
+    label: "Confirm password",
+    tag: "confirmPassword",
+    type: "text",
+    placeholder: "Re-enter your password",
+  },
+] as const;
+
+// Type for the keys of the form state
+type FormStateKey = (typeof inputFields)[number]["tag"];
+
+// Props for InputBox component
 interface InputProps {
   label: string;
-  tag: keyof SignUpFormState;
-  formData: SignUpFormState;
-  setFormData: Dispatch<SetStateAction<SignUpFormState>>;
+  tag: FormStateKey;
   placeholder: string;
   type: string;
-  formError: SignUpFormState;
-  setFormError: Dispatch<SetStateAction<SignUpFormState>>;
+  value: string;
+  error: string;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
-function InputBox(props: InputProps) {
-  const {
-    label,
-    tag,
-    formData,
-    setFormData,
-    placeholder,
-    type,
-    formError,
-    setFormError,
-  } = props;
+const InputBox: FC<InputProps> = ({
+  label,
+  tag,
+  type,
+  placeholder,
+  value,
+  error,
+  onChange,
+}) => (
+  <div className={styles.inputBox}>
+    <div className={styles.labelContainer}>
+      <label htmlFor={tag}>{label}</label>
+      {error && <p className={styles.requiredError}>{error}</p>}
+    </div>
+
+    <input
+      type={type}
+      name={tag}
+      id={tag}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      className={error ? styles.inputError : ""}
+    />
+  </div>
+);
+
+const SignUp: FC = () => {
+  const [formData, setFormData] = useState<FormState>(
+    Object.fromEntries(inputFields.map((filed) => [filed.tag, ""]))
+  );
+
+  const [formError, setFormError] = useState<FormState>({});
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [tag]: e.target.value,
-    });
-    setFormError({
-      ...formError,
-      [tag]: "",
-    });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormError((prev) => ({ ...prev, [name]: "" }));
   };
-
-  return (
-    <div className={styles.inputBox}>
-      <div className={styles.labelContainer}>
-        <label htmlFor={tag}>{label}</label>
-        {formError[tag] && (
-          <p className={styles.requiredError}>{formError[tag]}</p>
-        )}
-      </div>
-
-      <input
-        type={type}
-        name={tag}
-        id={tag}
-        value={formData[tag]}
-        onChange={handleChange}
-        placeholder={placeholder}
-        className={formError[tag] ? styles.inputError : ""}
-      />
-    </div>
-  );
-}
-
-function SignUp() {
-  const [formData, setFormData] = useState<SignUpFormState>({
-    firstname: "",
-    lastname: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    username: "",
-  });
-
-  const [formError, setFormError] = useState<SignUpFormState>({
-    firstname: "",
-    lastname: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    username: "",
-  });
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
-    let errors: Partial<SignUpFormState> = {};
+    let errors: FormState = {};
 
-    Object.keys(formData).forEach((key) => {
-      if (!formData[key as keyof SignUpFormState]) {
-        errors[key as keyof SignUpFormState] = "Required";
-      }
+    // Validate all fields
+    Object.entries(formData).forEach(([key, value]) => {
+      if (!value) errors[key] = "Required";
     });
 
-    if (Object.keys(errors).length > 0) {
-      setFormError((prevState) => ({ ...prevState, ...errors }));
-    }
-
+    // Password specific validations
     if (formData.password !== formData.confirmPassword) {
-      setFormError((prevState) => ({
-        ...prevState,
-        password: "Password don't match",
-        confirmPassword: "Password don't match",
-      }));
-      return;
+      errors.password = errors.confirmPassword = "Passwords don't match";
+    } else {
+      const passworRegex =
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      if (!passworRegex.test(formData.password)) {
+        errors.password = errors.confirmPassword = "Weak password";
+      }
     }
 
-    let passworRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/g;
-
-    if (!formData.password.match(passworRegex)) {
-      setFormError((prevState) => ({
-        ...prevState,
-        password: "Weak password",
-        confirmPassword: "Weak password",
-      }));
-      return;
+    if (Object.keys(errors).length > 0) {
+      setFormError(errors);
+    } else {
+      console.log("formData", formData);
+      // Backend
     }
-    console.log("formData", formData);
   }
   return (
     <div className={styles.main}>
       <form onSubmit={handleSubmit}>
-        <InputBox
-          label={"First Name"}
-          tag={"firstname"}
-          formData={formData}
-          setFormData={setFormData}
-          placeholder={"Enter your first name..."}
-          type={"text"}
-          formError={formError}
-          setFormError={setFormError}
-        />
-        <InputBox
-          label={"Last Name"}
-          tag={"lastname"}
-          formData={formData}
-          setFormData={setFormData}
-          placeholder={"Enter your last name..."}
-          type={"text"}
-          formError={formError}
-          setFormError={setFormError}
-        />
-        <InputBox
-          label={"Unique username"}
-          tag={"username"}
-          formData={formData}
-          setFormData={setFormData}
-          type={"text"}
-          placeholder={"Enter an unique username..."}
-          formError={formError}
-          setFormError={setFormError}
-        />
-        <InputBox
-          label={"Unique Email"}
-          tag={"email"}
-          formData={formData}
-          setFormData={setFormData}
-          type={"email"}
-          placeholder={"Enter an unique email..."}
-          formError={formError}
-          setFormError={setFormError}
-        />
-        <InputBox
-          label={"Password"}
-          tag={"password"}
-          formData={formData}
-          setFormData={setFormData}
-          type={"password"}
-          placeholder={"Minimum 8 Char"}
-          formError={formError}
-          setFormError={setFormError}
-        />
-        <InputBox
-          label={"Confirm password"}
-          tag={"confirmPassword"}
-          formData={formData}
-          setFormData={setFormData}
-          type={"text"}
-          placeholder={"Minimum 8 Char"}
-          formError={formError}
-          setFormError={setFormError}
-        />
+        {inputFields.map((field) => (
+          <InputBox
+            key={field.tag}
+            {...field}
+            value={formData[field.tag]}
+            error={formError[field.tag]}
+            onChange={handleChange}
+          />
+        ))}
+
         <button type="submit" className={styles.signUpBtn}>
           Sign Up
         </button>
       </form>
     </div>
   );
-}
+};
 
 export default SignUp;
