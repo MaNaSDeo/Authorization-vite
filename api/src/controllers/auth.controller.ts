@@ -35,5 +35,13 @@ export const login = catchAsync(async (req: Request, res: Response) => {
   delete userResponse.password;
   delete userResponse.__v;
 
-  res.status(httpStatus.OK).send({ user: userResponse, tokens });
+  res.status(httpStatus.OK).send({
+    user: {
+      firstname: user.firstname,
+      lastname: user.lastname,
+      username: user.username,
+      email: user.email,
+    },
+    tokens,
+  });
 });

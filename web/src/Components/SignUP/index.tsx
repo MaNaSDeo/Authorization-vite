@@ -1,13 +1,13 @@
 import { useState, ChangeEvent, FormEvent, FC } from "react";
 import styles from "./SignUP.module.scss";
 import axios from "axios";
+import InputBox from "../InputBox";
+import { type InputFields, type FormState } from "../../types";
 
 // Types for form state and errors
-type FormField = string;
-type FormState = Record<string, FormField>;
 
 // Input field configuration
-const inputFields = [
+const inputFields: InputFields = [
   {
     label: "First Name",
     tag: "firstname",
@@ -45,47 +45,6 @@ const inputFields = [
     placeholder: "Re-enter your password",
   },
 ] as const;
-
-// Type for the keys of the form state
-type FormStateKey = (typeof inputFields)[number]["tag"];
-
-// Props for InputBox component
-interface InputProps {
-  label: string;
-  tag: FormStateKey;
-  placeholder: string;
-  type: string;
-  value: string;
-  error: string;
-  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
-}
-
-const InputBox: FC<InputProps> = ({
-  label,
-  tag,
-  type,
-  placeholder,
-  value,
-  error,
-  onChange,
-}) => (
-  <div className={styles.inputBox}>
-    <div className={styles.labelContainer}>
-      <label htmlFor={tag}>{label}</label>
-      {error && <p className={styles.requiredError}>{error}</p>}
-    </div>
-
-    <input
-      type={type}
-      name={tag}
-      id={tag}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      className={error ? styles.inputError : ""}
-    />
-  </div>
-);
 
 const SignUp: FC = () => {
   const [formData, setFormData] = useState<FormState>(
@@ -132,7 +91,9 @@ const SignUp: FC = () => {
         console.log("response", response.data.user);
         const user = response.data.user;
         console.log("user", user);
-      } catch (error) {}
+      } catch (error) {
+        console.log(error);
+      }
     }
   }
   return (
