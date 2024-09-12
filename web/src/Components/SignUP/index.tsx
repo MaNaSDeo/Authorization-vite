@@ -1,5 +1,6 @@
 import { useState, ChangeEvent, FormEvent, FC } from "react";
 import styles from "./SignUP.module.scss";
+import axios from "axios";
 
 // Types for form state and errors
 type FormField = string;
@@ -99,7 +100,7 @@ const SignUp: FC = () => {
     setFormError((prev) => ({ ...prev, [name]: "" }));
   };
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
     let errors: FormState = {};
@@ -123,8 +124,15 @@ const SignUp: FC = () => {
     if (Object.keys(errors).length > 0) {
       setFormError(errors);
     } else {
-      console.log("formData", formData);
-      // Backend
+      try {
+        const response = await axios.post(
+          "http://localhost:3000/v1/auth/register",
+          formData
+        );
+        console.log("response", response.data.user);
+        const user = response.data.user;
+        console.log("user", user);
+      } catch (error) {}
     }
   }
   return (

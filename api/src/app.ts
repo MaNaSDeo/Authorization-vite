@@ -4,12 +4,16 @@ import httpStatus from "http-status";
 import routes from "./routes/v1";
 import ApiError from "./utils/ApiError";
 import connectDB from "./db/connect";
+import cors from "cors";
 
 dotenv.config();
 
 const app: Application = express();
 const PORT = process.env.PORT || 8000;
 const MONGO_URI = process.env.MONGO_URI as string;
+
+// Use CORS middleware
+app.use(cors());
 
 // Parse json request body
 app.use(express.json());
