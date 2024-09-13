@@ -3,33 +3,41 @@ import catchAsync from "../utils/catchAsync";
 import { authService, tokenService } from "../services";
 import { Response, Request } from "express";
 import ApiError from "../utils/ApiError";
+import { IUser } from "../models/user.model";
 
 const isProduction = process.env.NODE_ENV === "production";
 
 export const register = catchAsync(async (req: Request, res: Response) => {
   const { firstname, lastname, username, email, password } = req.body;
 
-  const user = await authService.register({
+  const response = (await authService.register({
     firstname,
     lastname,
     username,
     email,
     password,
-  });
+  })) as IUser;
+
+  const user = { ...response.toObject() };
+
+  delete user.hashedPassword;
+  delete user.__v;
+  delete user.updatedAt;
 
   res.status(httpStatus.CREATED).send({
-    user: {
-      firstname: user.firstname,
-      lastname: user.lastname,
-      username: user.username,
-      email: user.email,
-    },
+    user,
   });
 });
 
 export const login = catchAsync(async (req: Request, res: Response) => {
   const { username, email, password } = req.body;
-  const user = await authService.login(password, email, username);
+  const response = await authService.login(password, email, username);
+
+  const user = { ...response.toObject() };
+
+  delete user.hashedPassword;
+  delete user.__v;
+  delete user.updatedAt;
 
   // Generate access and refresh tokens
   const tokens = await tokenService.generateAuthTokens(user);
@@ -54,12 +62,7 @@ export const login = catchAsync(async (req: Request, res: Response) => {
   });
 
   res.status(httpStatus.OK).send({
-    user: {
-      firstname: user.firstname,
-      lastname: user.lastname,
-      username: user.username,
-      email: user.email,
-    },
+    user,
   });
 });
 

@@ -10,6 +10,9 @@ export interface IUser extends Document {
   email: string;
   hashedPassword: string;
   isPasswordMatch: (password: string) => Promise<boolean>;
+  updatedAt?: Date;
+  __v?: any;
+  createdAt?: Date;
 }
 
 const UserSchema: Schema<IUser> = new mongoose.Schema<IUser>(
