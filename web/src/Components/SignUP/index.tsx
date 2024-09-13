@@ -1,10 +1,8 @@
 import { useState, ChangeEvent, FormEvent, FC } from "react";
 import styles from "./SignUP.module.scss";
-import axios from "axios";
 import InputBox from "../InputBox";
 import { type InputFields, type FormState } from "../../types";
-
-// Types for form state and errors
+import api from "../../api/axiosConfig";
 
 // Input field configuration
 const inputFields: InputFields = [
@@ -84,8 +82,8 @@ const SignUp: FC = () => {
       setFormError(errors);
     } else {
       try {
-        const response = await axios.post(
-          "http://localhost:3000/v1/auth/register",
+        const response = await api.post(
+          "http://localhost:3000/api/v1/auth/register",
           formData
         );
         console.log("response", response.data.user);

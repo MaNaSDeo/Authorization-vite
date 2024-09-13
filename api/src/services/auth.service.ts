@@ -2,7 +2,7 @@ import httpStatus from "http-status";
 import ApiError from "../utils/ApiError";
 import User, { type IUser } from "../models/user.model";
 import bycrpt from "bcryptjs";
-import { Document } from "mongoose";
+import { Document, Types } from "mongoose";
 
 export interface RegisterProps {
   firstname: string;
@@ -58,5 +58,13 @@ export const login = async (
     throw new ApiError(httpStatus.UNAUTHORIZED, "Incorrect credentials");
   }
 
+  return user;
+};
+
+export const getUserById = async (id: string) => {
+  const user = await User.findById(new Types.ObjectId(id));
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
   return user;
 };

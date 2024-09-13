@@ -5,15 +5,24 @@ import routes from "./routes/v1";
 import ApiError from "./utils/ApiError";
 import connectDB from "./db/connect";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 
 const app: Application = express();
 const PORT = process.env.PORT || 8000;
 const MONGO_URI = process.env.MONGO_URI as string;
+const isProduction = process.env.NODE_ENV === "production";
+
+const corsOptions = {
+  origin: isProduction ? "Frontend-url" : "http://localhost:3001",
+  credentials: true,
+};
 
 // Use CORS middleware
-app.use(cors());
+app.use(cors(corsOptions));
+
+app.use(cookieParser());
 
 // Parse json request body
 app.use(express.json());
@@ -23,7 +32,7 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 // Reroute all API request starting with "/v1" route
-app.use("/v1", routes);
+app.use("/api/v1", routes);
 
 // Handles 404
 app.use((req: Request, res: Response, next: NextFunction) => {

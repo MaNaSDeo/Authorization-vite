@@ -1,6 +1,10 @@
-import jwt from "jsonwebtoken";
-import { Document } from "mongoose";
+import jwt, { verify } from "jsonwebtoken";
+import { Document, Types } from "mongoose";
 import { IUser } from "../models/user.model";
+import ApiError from "../utils/ApiError";
+import httpStatus from "http-status";
+import { authService } from "../services";
+import RefreshToken, { IRefreshToken } from "../models/refreshToken.model";
 
 // Types of tokens our system can generate
 type TokenType = "access" | "refresh" | "resetPassword";
@@ -12,6 +16,8 @@ interface TokenPayload {
   iat: number; // Issued at timestamp
   exp: number; // Expiration timestamp
 }
+
+interface RefreshTokenDoc extends IRefreshToken, Document {}
 
 // Parameters required to generate a token
 interface GenerateTokenParams {
@@ -98,4 +104,49 @@ export const generateAuthTokens = async (
   }
 
   return tokens;
+};
+
+export const verifyToken = async (
+  token: string,
+  type: "access" | "refresh"
+): Promise<RefreshTokenDoc> => {
+  try {
+    const payload = jwt.verify(
+      token,
+      process.env.JWT_SECRET! as string
+    ) as TokenPayload;
+
+    if (payload.type !== type) {
+      throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid token type");
+    }
+
+    const refreshTokenDoc = await RefreshToken.findOne({
+      token,
+      user: new Types.ObjectId(payload.sub),
+    }).exec();
+
+    if (!refreshTokenDoc) {
+      throw new ApiError(httpStatus.UNAUTHORIZED, "Token not found");
+    }
+    return refreshTokenDoc as RefreshTokenDoc;
+  } catch (error) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid Token");
+  }
+};
+
+export const refreshAuthTokens = async (refreshToken: string) => {
+  try {
+    const refreshTokenDoc = await verifyToken(refreshToken, "refresh");
+    const user = await authService.getUserById(
+      refreshTokenDoc.user!.toString()
+    );
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+    await RefreshToken.deleteOne({ _id: refreshTokenDoc._id });
+    return generateAuthTokens(user);
+  } catch (error) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate");
+  }
 };

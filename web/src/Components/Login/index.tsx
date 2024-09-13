@@ -1,8 +1,8 @@
-import React, { ChangeEvent, FC, FormEvent, useState } from "react";
+import { ChangeEvent, FC, FormEvent, useState } from "react";
 import { FormState, InputFields } from "../../types";
 import styles from "./Login.module.scss";
 import InputBox from "../InputBox";
-import axios from "axios";
+import api from "../../api/axiosConfig";
 
 const inputFields: InputFields = [
   {
@@ -49,8 +49,8 @@ const Login: FC = () => {
         username: formData.usernameEmail,
       };
       try {
-        const response = await axios.post(
-          "http://localhost:3000/v1/auth/login",
+        const response = await api.post(
+          "http://localhost:3000/api/v1/auth/login",
           loginData
         );
         const user = response.data;
