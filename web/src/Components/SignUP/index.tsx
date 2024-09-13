@@ -2,7 +2,8 @@ import { useState, ChangeEvent, FormEvent, FC } from "react";
 import styles from "./SignUP.module.scss";
 import InputBox from "../InputBox";
 import { type InputFields, type FormState } from "../../types";
-import api from "../../api/axiosConfig";
+import { useAuth } from "../../Context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 // Input field configuration
 const inputFields: InputFields = [
@@ -50,6 +51,8 @@ const SignUp: FC = () => {
   );
 
   const [formError, setFormError] = useState<FormState>({});
+  const { register } = useAuth();
+  const navigate = useNavigate();
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -82,13 +85,20 @@ const SignUp: FC = () => {
       setFormError(errors);
     } else {
       try {
-        const response = await api.post(
-          "http://localhost:3000/api/v1/auth/register",
-          formData
-        );
-        console.log("response", response.data.user);
-        const user = response.data.user;
-        console.log("user", user);
+        const response = await register({
+          username: formData.username,
+          password: formData.password,
+          email: formData.email,
+          firstname: formData.firstname,
+          lastname: formData.lastname,
+        });
+        console.log("response", response);
+        if (response) {
+          setFormData(
+            Object.fromEntries(inputFields.map((filed) => [filed.tag, ""]))
+          );
+          navigate("/login");
+        }
       } catch (error) {
         console.log(error);
       }

@@ -1,8 +1,9 @@
-import { ChangeEvent, FC, FormEvent, useState } from "react";
+import { ChangeEvent, FC, FormEvent, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FormState, InputFields } from "../../types";
 import styles from "./Login.module.scss";
 import InputBox from "../InputBox";
-import api from "../../api/axiosConfig";
+import { useAuth } from "../../Context/AuthContext";
 
 const inputFields: InputFields = [
   {
@@ -24,6 +25,15 @@ const Login: FC = () => {
     Object.fromEntries(inputFields.map((filed) => [filed.tag, ""]))
   );
   const [formError, setFormError] = useState<FormState>({});
+
+  const navigate = useNavigate();
+  const { login, user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      console.log("user useEffect", user);
+    }
+  }, [user]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -49,12 +59,17 @@ const Login: FC = () => {
         username: formData.usernameEmail,
       };
       try {
-        const response = await api.post(
-          "http://localhost:3000/api/v1/auth/login",
-          loginData
-        );
-        const user = response.data;
-        console.log("user", user);
+        const response = await login(loginData);
+
+        if (response) {
+          setFormData(
+            Object.fromEntries(inputFields.map((filed) => [filed.tag, ""]))
+          );
+          //Succes snackbar
+          navigate("/welcome");
+        } else {
+          //... Error logic here and an error snackbare
+        }
       } catch (error) {
         console.log(error);
       }
