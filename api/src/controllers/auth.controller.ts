@@ -67,8 +67,25 @@ export const login = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const logout = catchAsync(async (req: Request, res: Response) => {
-  res.clearCookie("access_token");
-  res.clearCookie("refresh_token");
+  // Clear access_token cookie
+  res.clearCookie("access_token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/api/v1",
+    domain:
+      process.env.NODE_ENV === "production" ? "your-domain.com" : "localhost",
+  });
+
+  // Clear refresh_token cookie
+  res.clearCookie("refresh_token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/api/v1",
+    domain:
+      process.env.NODE_ENV === "production" ? "your-domain.com" : "localhost",
+  });
 
   res.status(httpStatus.OK).send({ message: "Logged out successfully" });
 });
@@ -101,4 +118,89 @@ export const refreshToken = catchAsync(async (req: Request, res: Response) => {
   });
 
   res.status(httpStatus.OK).send({ message: "Tokens refreshed successfully" });
+});
+
+export const checkAuth = catchAsync(async (req: Request, res: Response) => {
+  const accessToken = req.cookies.access_token;
+  const refreshToken = req.cookies.refresh_token;
+
+  if (!accessToken && !refreshToken) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Not authenticated");
+  }
+
+  try {
+    // First, try to verify the access token
+    const userData = await tokenService.verifyToken(accessToken, "access");
+    const user = (await authService.getUserById(
+      userData.user.toString()
+    )) as IUser;
+
+    if (!user) {
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+    }
+    // If successful, send user data
+    const userResponse = { ...user.toObject() };
+    delete userResponse.hashedPassword;
+    delete userResponse.__v;
+    delete userResponse.updatedAt;
+
+    res.status(httpStatus.OK).send({ user: userResponse });
+  } catch (error) {
+    // If access token is invalid, try refreshing tokens
+    if (refreshToken) {
+      try {
+        const tokens = await tokenService.refreshAuthTokens(refreshToken);
+
+        // Set new cookies
+        res.cookie("access_token", tokens.access.token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          maxAge: 15 * 60 * 1000,
+          path: "/api/v1",
+          domain:
+            process.env.NODE_ENV === "production"
+              ? "your-domain.com"
+              : "localhost",
+        });
+
+        res.cookie("refresh_token", tokens.refresh!.token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          maxAge: 3 * 24 * 60 * 60 * 1000,
+          path: "/api/v1",
+          domain:
+            process.env.NODE_ENV === "production"
+              ? "your-domain.com"
+              : "localhost",
+        });
+
+        // Fetch and return user data
+        const userData = await tokenService.verifyToken(
+          tokens.access.token,
+          "access"
+        );
+
+        const user = (await authService.getUserById(
+          userData.user.toString()
+        )) as IUser;
+
+        if (!user) {
+          throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+        }
+
+        const userResponse = { ...user.toObject() };
+        delete userResponse.hashedPassword;
+        delete userResponse.__v;
+        delete userResponse.updatedAt;
+
+        res.status(httpStatus.OK).send({ user: userResponse });
+      } catch (error) {
+        throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid refresh token");
+      }
+    } else {
+      throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid access token");
+    }
+  }
 });

@@ -97,6 +97,17 @@ export const generateAuthTokens = async (
       type: "refresh",
       secret: process.env.JWT_REFRESH_SECRET!,
     });
+
+    // Store the refresh token in the database
+    await RefreshToken.findOneAndUpdate(
+      { user: user._id },
+      {
+        token: refreshToken,
+        expires: refreshTokenExpires,
+      },
+      { upsert: true, new: true }
+    );
+
     tokens.refresh = {
       token: refreshToken,
       expires: refreshTokenExpires,
@@ -110,18 +121,21 @@ export const verifyToken = async (
   token: string,
   type: "access" | "refresh"
 ): Promise<RefreshTokenDoc> => {
+  let secret: string;
+  if (type === "access") {
+    secret = process.env.JWT_ACCESS_SECRET!;
+  } else {
+    secret = process.env.JWT_REFRESH_SECRET!;
+  }
+
   try {
-    const payload = jwt.verify(
-      token,
-      process.env.JWT_SECRET! as string
-    ) as TokenPayload;
+    const payload = jwt.verify(token, secret) as TokenPayload;
 
     if (payload.type !== type) {
       throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid token type");
     }
-
     const refreshTokenDoc = await RefreshToken.findOne({
-      token,
+      // token,
       user: new Types.ObjectId(payload.sub),
     }).exec();
 
@@ -137,6 +151,7 @@ export const verifyToken = async (
 export const refreshAuthTokens = async (refreshToken: string) => {
   try {
     const refreshTokenDoc = await verifyToken(refreshToken, "refresh");
+
     const user = await authService.getUserById(
       refreshTokenDoc.user!.toString()
     );

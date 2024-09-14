@@ -11,6 +11,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  setUser: (data: any) => void;
   register: ({
     username,
     password,
@@ -34,8 +35,8 @@ interface AuthContextType {
     email: string;
   }) => Promise<boolean>;
   logout: () => Promise<boolean>;
-  //   refreshToken: () => Promise<void>;
-  //   initializeAuth: () => Promise<void>;
+  refreshToken: () => Promise<void>;
+  initializeAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -44,6 +45,16 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
 
+  const initializeAuth = async () => {
+    try {
+      // const response = await api
+    } catch (error) {}
+  };
+  const refreshToken = async () => {
+    try {
+      // const response = await api
+    } catch (error) {}
+  };
   const register = async ({
     username,
     password,
@@ -113,7 +124,16 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated, login, logout, register }}
+      value={{
+        user,
+        isAuthenticated,
+        setUser,
+        login,
+        logout,
+        register,
+        refreshToken,
+        initializeAuth,
+      }}
     >
       {children}
     </AuthContext.Provider>
