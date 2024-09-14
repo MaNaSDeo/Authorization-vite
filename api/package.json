@@ -4,8 +4,8 @@
   "main": "app.js",
   "license": "MIT",
   "scripts": {
-    "build": "npx tsc",
-    "start": "yarn build && node dist/app.js",
+    "build": "tsc",
+    "start": "node dist/app.js",
     "dev": "ts-node-dev --respawn --pretty src/app.ts"
   },
   "dependencies": {
