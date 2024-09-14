@@ -49,7 +49,7 @@ export const login = catchAsync(async (req: Request, res: Response) => {
     sameSite: isProduction ? "none" : "lax", // Must be 'none' to enable cross-site delivery
     maxAge: 15 * 60 * 1000, // 15 minutes
     path: "/api/v1", // This matches your API path structure
-    domain: isProduction ? "domainname" : "localhost", // Adjust in production
+    domain: isProduction ? process.env.REACT_APP_Frontend_URL! : "localhost",
   });
 
   res.cookie("refresh_token", tokens.refresh!.token, {
@@ -58,7 +58,7 @@ export const login = catchAsync(async (req: Request, res: Response) => {
     sameSite: isProduction ? "none" : "lax",
     maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days
     path: "/api/v1",
-    domain: isProduction ? "domainname" : "localhost",
+    domain: isProduction ? process.env.REACT_APP_Frontend_URL! : "localhost",
   });
 
   res.status(httpStatus.OK).send({
@@ -74,7 +74,9 @@ export const logout = catchAsync(async (req: Request, res: Response) => {
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/api/v1",
     domain:
-      process.env.NODE_ENV === "production" ? "your-domain.com" : "localhost",
+      process.env.NODE_ENV === "production"
+        ? process.env.REACT_APP_Frontend_URL!
+        : "localhost",
   });
 
   // Clear refresh_token cookie
@@ -84,7 +86,9 @@ export const logout = catchAsync(async (req: Request, res: Response) => {
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/api/v1",
     domain:
-      process.env.NODE_ENV === "production" ? "your-domain.com" : "localhost",
+      process.env.NODE_ENV === "production"
+        ? process.env.REACT_APP_Frontend_URL!
+        : "localhost",
   });
 
   res.status(httpStatus.OK).send({ message: "Logged out successfully" });
@@ -105,7 +109,7 @@ export const refreshToken = catchAsync(async (req: Request, res: Response) => {
     sameSite: isProduction ? "none" : "lax",
     maxAge: 15 * 60 * 1000,
     path: "/api/v1",
-    domain: isProduction ? "domanin name" : "localhost",
+    domain: isProduction ? process.env.REACT_APP_Frontend_URL! : "localhost",
   });
 
   res.cookie("refresh_token", tokens.refresh!.token, {
@@ -114,7 +118,7 @@ export const refreshToken = catchAsync(async (req: Request, res: Response) => {
     sameSite: isProduction ? "none" : "lax",
     maxAge: 3 * 24 * 60 * 60 * 1000,
     path: "/api/v1",
-    domain: isProduction ? "domanin name" : "localhost",
+    domain: isProduction ? process.env.REACT_APP_Frontend_URL! : "localhost",
   });
 
   res.status(httpStatus.OK).send({ message: "Tokens refreshed successfully" });
@@ -160,7 +164,7 @@ export const checkAuth = catchAsync(async (req: Request, res: Response) => {
           path: "/api/v1",
           domain:
             process.env.NODE_ENV === "production"
-              ? "your-domain.com"
+              ? process.env.REACT_APP_Frontend_URL!
               : "localhost",
         });
 
@@ -172,7 +176,7 @@ export const checkAuth = catchAsync(async (req: Request, res: Response) => {
           path: "/api/v1",
           domain:
             process.env.NODE_ENV === "production"
-              ? "your-domain.com"
+              ? process.env.REACT_APP_Frontend_URL!
               : "localhost",
         });
 

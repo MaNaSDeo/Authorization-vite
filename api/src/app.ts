@@ -15,7 +15,9 @@ const MONGO_URI = process.env.MONGO_URI as string;
 const isProduction = process.env.NODE_ENV === "production";
 
 const corsOptions = {
-  origin: isProduction ? "Frontend-url" : "http://localhost:3001",
+  origin: isProduction
+    ? process.env.REACT_APP_Frontend_URL!
+    : "http://localhost:3001",
   credentials: true,
 };
 
