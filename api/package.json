@@ -4,7 +4,7 @@
   "main": "app.js",
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
+    "build": "yarn install --production=false && tsc",
     "start": "node dist/app.js",
     "postinstall": "tsc",
     "dev": "ts-node-dev --respawn --pretty src/app.ts"
