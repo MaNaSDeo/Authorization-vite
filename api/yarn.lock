@@ -132,6 +132,13 @@
   dependencies:
     undici-types "~6.19.2"
 
+"@types/node@^22.5.5":
+  version "22.5.5"
+  resolved "https://registry.npmjs.org/@types/node/-/node-22.5.5.tgz#52f939dd0f65fc552a4ad0b392f3c466cc5d7a44"
+  integrity sha512-Xjs4y5UPO/CLdzpgR6GirZJx36yScjh73+2NlLlkFRSoQN8B0DpfXPdZGnvVmLRLOsqDpOfTNv7D9trgGhmOIA==
+  dependencies:
+    undici-types "~6.19.2"
+
 "@types/qs@*":
   version "6.9.15"
   resolved "https://registry.npmjs.org/@types/qs/-/qs-6.9.15.tgz#adde8a060ec9c305a82de1babc1056e73bd64dce"
