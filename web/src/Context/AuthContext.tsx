@@ -1,12 +1,14 @@
 import { createContext, FC, ReactNode, useContext, useState } from "react";
 import api from "../api/axiosConfig";
+import axios from "axios";
 
 interface User {
-  username?: string;
-  firstname?: string;
-  lastname?: string;
-  email?: string;
-  password?: string;
+  username: string;
+  firstname: string;
+  lastname: string;
+  email: string;
+  createdAt: Date;
+  _id: string;
 }
 interface AuthContextType {
   user: User | null;
@@ -37,9 +39,12 @@ interface AuthContextType {
   logout: () => Promise<boolean>;
   refreshToken: () => Promise<void>;
   initializeAuth: () => Promise<void>;
+  checkAuthStatus: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const API_URL = process.env.REACT_APP_API_URL!;
 
 export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -122,6 +127,21 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const checkAuthStatus = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/auth/check`, {
+        withCredentials: true,
+      });
+      const userData = response.data.user;
+      setUser(userData);
+      setIsAuthenticated(true);
+      return true;
+    } catch (error) {
+      console.error("Authentication check failed: ", error);
+      return false;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -133,6 +153,7 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
         register,
         refreshToken,
         initializeAuth,
+        checkAuthStatus,
       }}
     >
       {children}
